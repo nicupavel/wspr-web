@@ -3,6 +3,11 @@
 Tracks [WSPR](<https://en.wikipedia.org/wiki/WSPR_(amateur_radio_software)>) callsigns on map with 4 pairs extra precision (8 characters) [Maidenhead](https://en.wikipedia.org/wiki/Maidenhead_Locator_System) (adding the extended square).
 Improved location precision means going from (example) **CN83MU** to **CN83MU73**.
 
+![wspr-web](https://github.com/nicupavel/wspr-web/assets/1650801/42898b0d-8ecb-4340-b41a-e9849ab116dc)
+
+## Online version
+
+You can see the online version at [wspr.12v.com](https://wspr.12v.com)
 ## WSPR encoding
 
 This project uses a different encoding technique to add extra location precision in the WSPR packets. The extra location is encoded in the power level (dBm) part of the
