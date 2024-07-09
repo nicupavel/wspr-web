@@ -28,6 +28,10 @@ describe('wspr.live', () => {
   })
 })
 
+const testQuery = `
+select id, time, band, rx_sign, rx_lat, rx_lon, rx_loc, tx_sign, tx_lat, tx_lon, tx_loc, distance, azimuth, rx_azimuth, frequency, power, snr, drift, version, code from wspr.rx 
+where band != 99 and match(tx_sign,'^[Q01]') = 0 and time > subtractMinutes(now(), 10080) and tx_sign = 'KN6KEZ' order by time desc limit 1000 FORMAT JSONCompact
+`
 const wsprliveTestCallsign = 'P4NIC'
 const wsprliveTestDataExtraLoc = {
   meta: [

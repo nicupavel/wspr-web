@@ -12,10 +12,11 @@ import { useMaidenheadLeaflet } from '@/services/maidenhead-leaflet'
 const wsprStore = useWSPRStore()
 const maidenheadLeaflet = useMaidenheadLeaflet()
 
-const { currentTracking, geoData } = storeToRefs(wsprStore)
+const { currentTracking, geoData, uiOptions } = storeToRefs(wsprStore)
 
 let map
 let geoLayer
+let maidenLayer
 
 function onEachFeature(feature, layer) {
   let popupContent = ''
@@ -34,9 +35,13 @@ function buildMap() {
     maxZoom: 19
   }).addTo(map)
 
-  L.maidenhead({
+  maidenLayer = L.maidenhead({
     color: 'rgba(255, 0, 0, 0.4)'
   }).addTo(map)
+
+  if (!uiOptions.value?.showGrid) {
+    map.removeLayer(maidenLayer)
+  }
 
   geoLayer = L.geoJSON(null, {
     style(feature) {
@@ -44,9 +49,11 @@ function buildMap() {
     },
     onEachFeature,
     pointToLayer(feature, latlng) {
+      const markerColor = feature?.properties?.precise ? '#000000' : '#de0a26'
+
       return L.circleMarker(latlng, {
         radius: 8,
-        fillColor: '#000000',
+        fillColor: markerColor,
         color: '#ffffff',
         weight: 1,
         opacity: 1,
@@ -64,6 +71,18 @@ watch(
     geoLayer.addData(data)
     const lastCoord = data.features[0].geometry.coordinates
     map.setView(new L.LatLng(lastCoord[1], lastCoord[0]), 13)
+  },
+  { deep: true }
+)
+
+watch(
+  () => uiOptions.value,
+  (data) => {
+    if (data?.showGrid) {
+      map.addLayer(maidenLayer)
+    } else {
+      map.removeLayer(maidenLayer)
+    }
   },
   { deep: true }
 )

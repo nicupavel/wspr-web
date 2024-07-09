@@ -6,6 +6,7 @@ import { useWSPRStore } from '@/stores/wspr'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import Chip from 'primevue/chip'
+import ToggleButton from 'primevue/togglebutton'
 
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -15,7 +16,7 @@ const callsign = ref()
 
 const wsprStore = useWSPRStore()
 
-const { currentTracking } = storeToRefs(wsprStore)
+const { currentTracking, uiOptions } = storeToRefs(wsprStore)
 const { track, stopTracking, STATE } = wsprStore
 
 console.log(STATE.IDLE)
@@ -58,7 +59,7 @@ function onTrack() {
     <div class="title">{{ msg }}</div>
     <div class="subtitle pl pb">Search for a callsign to begin tracking</div>
     <div style="display: grid; grid-template-columns: 2fr 1fr; column-gap: 2em">
-      <div>
+      <div style="display: grid; grid-template-rows: 1fr 1fr; row-gap: 1em">
         <InputGroup>
           <InputText
             v-model="callsign"
@@ -76,6 +77,9 @@ function onTrack() {
             @click="onTrack"
           />
         </InputGroup>
+        <div>
+          <ToggleButton v-model="uiOptions.showGrid" onLabel="Hide Grid" offLabel="Show Grid" />
+        </div>
       </div>
       <div>
         <Chip :label="`State: ${STATE_TEXT[currentTracking.state] ?? 'Unknown'}`" />

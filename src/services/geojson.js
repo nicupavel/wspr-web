@@ -1,5 +1,5 @@
 export default function useGeoJson() {
-  function featurePoint(lat, lon, popupContent) {
+  function featurePoint(lat, lon, properties) {
     return {
       geometry: {
         type: 'Point',
@@ -7,7 +7,7 @@ export default function useGeoJson() {
       },
       type: 'Feature',
       properties: {
-        popupContent: popupContent
+        ...properties
       }
     }
   }

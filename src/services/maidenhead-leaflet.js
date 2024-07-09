@@ -83,6 +83,9 @@ export const useMaidenheadLeaflet = () => {
         1.8,
         1.6
       )
+
+      if (!this._map) return
+
       var bounds = this._map.getBounds()
       var zoom = this._map.getZoom()
       var unit = d3[zoom]

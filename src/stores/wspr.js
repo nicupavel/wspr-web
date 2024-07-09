@@ -13,7 +13,8 @@ import useGeoJson from '@/services/geojson'
 export const useWSPRStore = defineStore('wspr', () => {
   const REFRESH_INTERVAL_MIN = 4
   const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MIN * 60 * 1000
-  const INITIAL_DOWNLOAD_ROWS = 10
+  const INITIAL_DOWNLOAD_FROM_MINUTES = 40320 // 2 weeks
+  const INITIAL_DOWNLOAD_ROWS_LIMIT = 0
   const MAX_DATA_LENGTH = 1000000
 
   const STATE = {
@@ -39,6 +40,10 @@ export const useWSPRStore = defineStore('wspr', () => {
     error: null
   })
 
+  const uiOptions = ref({
+    showGrid: false
+  })
+
   async function download(callsign, minutesInterval, limit) {
     if (!callsign) return null
 
@@ -55,7 +60,9 @@ export const useWSPRStore = defineStore('wspr', () => {
 
       if (wsprData?.rows) {
         const kv = wsprService.parse(wsprData)
+        console.log(kv)
         const aggregatedData = wsprService.aggregate(kv, callsign)
+        console.log(aggregatedData)
         currentTracking.value.rowsReceived = wsprData.rows
         return aggregatedData
       }
@@ -77,12 +84,14 @@ export const useWSPRStore = defineStore('wspr', () => {
 
     for (const key in aggregatedData) {
       const maidenhead = aggregatedData[key].tx_loc
+      const precise = aggregatedData[key].precise
       const coords = maidenheadConvert.toLatLon(maidenhead)
 
-      // cummulative data
+      // cummulative data for datatable ui
       data.value.push({
         date: key,
         maidenhead: maidenhead,
+        precise: precise,
         lat: coords[0],
         lon: coords[1]
       })
@@ -91,7 +100,10 @@ export const useWSPRStore = defineStore('wspr', () => {
         data.value.shift()
       }
 
-      const point = geoJson.featurePoint(coords[0], coords[1], `${key}: ${maidenhead}`)
+      const point = geoJson.featurePoint(coords[0], coords[1], {
+        popupContent: `${key}: ${maidenhead}`,
+        precise: precise
+      })
       geoJson.addToCollection(geoData.value, point)
     }
     //console.log(geoData.value)
@@ -106,7 +118,11 @@ export const useWSPRStore = defineStore('wspr', () => {
       data.value = []
       currentTracking.value.prevCallsign = callsign
       // Initial download (get last rows)
-      const aggregatedData = await download(callsign, 0, INITIAL_DOWNLOAD_ROWS)
+      const aggregatedData = await download(
+        callsign,
+        INITIAL_DOWNLOAD_FROM_MINUTES,
+        INITIAL_DOWNLOAD_ROWS_LIMIT
+      )
       storeData(aggregatedData)
     }
 
@@ -131,6 +147,7 @@ export const useWSPRStore = defineStore('wspr', () => {
     data,
     geoData,
     currentTracking,
+    uiOptions,
     download,
     track,
     stopTracking

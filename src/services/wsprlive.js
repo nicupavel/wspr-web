@@ -11,7 +11,12 @@ export default function useWSPRLiveService() {
     minutesInterval = minutesInterval ?? 0
     limit = limit ?? 0
 
-    let query = `SELECT * FROM wspr.rx WHERE tx_sign='${callsign}'`
+    let query = `SELECT id, time, rx_sign, tx_sign, tx_lat, tx_lon, tx_loc, distance, azimuth, frequency, power FROM wspr.rx 
+      WHERE tx_sign='${callsign}'
+        AND (band = 10 OR band = 14 OR band = 18 OR band = 21) 
+        AND match(tx_sign,'^[Q01]') = 0
+    `
+
     if (minutesInterval) query += ` AND time >= subtractMinutes(now(), ${minutesInterval})`
     query += ' ORDER BY time DESC'
     if (limit) query += ` LIMIT ${limit}`
@@ -81,31 +86,41 @@ export default function useWSPRLiveService() {
     let isPaired = false
 
     for (const timeKey in kvData[callsign]) {
+      const entry = kvData[callsign][timeKey]
+
       if (prevTimeKey == null) {
         prevTimeKey = timeKey
       } else if (timeKey != prevTimeKey) {
         const d1 = new Date(prevTimeKey)
         const d2 = new Date(timeKey)
 
-        // Data is ordered desc by time
+        // Data is ordered desc by time check for a 2min diff between reports
         if ((d1 - d2) / (60 * 1000) == PAIR_DIFF) {
           isPaired = true
+        } else {
+          // Save this marker as a low accuracy maidenhead
+          aggregatedData[prevTimeKey] = {
+            tx_loc: entry.tx_loc,
+            precise: false
+          }
+          prevTimeKey = timeKey
+          continue
         }
       }
-
-      const entry = kvData[callsign][timeKey]
 
       if (prevExtraLocation == null) {
         // First value for extra location
         prevExtraLocation = entry.tx_loc_extra
       } else if (entry.tx_loc_extra != prevExtraLocation) {
         // We got the second value concatenate maidenhead location + 2 extra digits
-        let d1 = DBM_VALUES.indexOf(prevExtraLocation)
-        let d2 = DBM_VALUES.indexOf(entry.tx_loc_extra)
+        let maiden1 = DBM_VALUES.indexOf(prevExtraLocation)
+        let maiden2 = DBM_VALUES.indexOf(entry.tx_loc_extra)
 
-        if (d1 > -1 && d2 > -1 && isPaired) {
+        if (maiden1 > -1 && maiden2 > -1 && isPaired) {
+          //console.log(`Adding location ${maiden2} ${maiden1}`)
           aggregatedData[timeKey] = {
-            tx_loc: entry.tx_loc + d2 + d1 // As report is ordered desc by time we first find the second digit
+            tx_loc: entry.tx_loc + maiden2 + maiden1, // As report is ordered desc by time we first find the second digit
+            precise: true
           }
           // Reset to find another pair
           isPaired = false
