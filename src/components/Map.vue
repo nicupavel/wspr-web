@@ -8,25 +8,20 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import { useMaidenheadLeaflet } from '@/services/maidenhead-leaflet'
+import useGeoJsonLeaflet from '@/services/geojson-leaflet'
+import useGeoJsonData from '@/services/geojson-data'
+import { compileScript } from 'vue/compiler-sfc'
 
 const wsprStore = useWSPRStore()
 const maidenheadLeaflet = useMaidenheadLeaflet()
+const geoJsonLayer = useGeoJsonLeaflet()
+const geoJsonData = useGeoJsonData()
 
-const { currentTracking, geoData, uiOptions } = storeToRefs(wsprStore)
+const { currentTracking, data, uiOptions } = storeToRefs(wsprStore)
 
 let map
 let geoLayer
 let maidenLayer
-
-function onEachFeature(feature, layer) {
-  let popupContent = ''
-
-  if (feature.properties && feature.properties.popupContent) {
-    popupContent += feature.properties.popupContent
-  }
-
-  layer.bindPopup(popupContent)
-}
 
 function buildMap() {
   map = L.map('map').setView([40, -121], 3)
@@ -43,33 +38,18 @@ function buildMap() {
     map.removeLayer(maidenLayer)
   }
 
-  geoLayer = L.geoJSON(null, {
-    style(feature) {
-      return feature.properties && feature.properties.style
-    },
-    onEachFeature,
-    pointToLayer(feature, latlng) {
-      const markerColor = feature?.properties?.precise ? '#000000' : '#de0a26'
-
-      return L.circleMarker(latlng, {
-        radius: 8,
-        fillColor: markerColor,
-        color: '#ffffff',
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-      })
-    }
-  }).addTo(map)
+  geoLayer = geoJsonLayer.createLayer()
+  geoLayer.addTo(map)
 }
 
 watch(
-  () => geoData.value,
+  () => data.value,
   (data) => {
-    if (!data) return
+    if (!data || !data.length) return
+    const geoData = geoJsonData.fromData(data)
+    geoLayer.addData(geoData)
 
-    geoLayer.addData(data)
-    const lastCoord = data.features[0].geometry.coordinates
+    const lastCoord = geoData.features[0].geometry.coordinates
     map.setView(new L.LatLng(lastCoord[1], lastCoord[0]), 13)
   },
   { deep: true }
@@ -77,11 +57,33 @@ watch(
 
 watch(
   () => uiOptions.value,
-  (data) => {
-    if (data?.showGrid) {
+  (options) => {
+    if (options.showGrid) {
       map.addLayer(maidenLayer)
     } else {
       map.removeLayer(maidenLayer)
+    }
+
+    let geoData
+
+    if (options.dateFilter == null) {
+      // Date Filter reset show entire data available
+      geoData = data.value
+    } else if (options.dateFilter[1]) {
+      // Both Dates filled in filter show filtered data
+      geoData = data.value.filter(
+        (e) =>
+          new Date(e.date) >= options.dateFilter[0] && new Date(e.date) <= options.dateFilter[1]
+      )
+    }
+
+    // Show data on geoJson layer
+    try {
+      geoLayer.remove()
+      geoLayer = geoJsonLayer.createLayer(geoJsonData.fromData(geoData))
+      geoLayer.addTo(map)
+    } catch (e) {
+      //console.error(e)
     }
   },
   { deep: true }
@@ -99,3 +101,4 @@ onMounted(() => {
 <style scoped>
 @import 'leaflet/dist/leaflet.css';
 </style>
+@/services/geojson-data

@@ -4,9 +4,9 @@ import { storeToRefs } from 'pinia'
 import { useWSPRStore } from '@/stores/wspr'
 
 import InputGroup from 'primevue/inputgroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
 import Chip from 'primevue/chip'
 import ToggleButton from 'primevue/togglebutton'
+import DatePicker from 'primevue/datepicker'
 
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -52,6 +52,10 @@ function onTrack() {
     stopTracking()
   }
 }
+
+function onClearDate(event) {
+  uiOptions.value.dateFilter = null
+}
 </script>
 
 <template>
@@ -77,8 +81,20 @@ function onTrack() {
             @click="onTrack"
           />
         </InputGroup>
-        <div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 1em">
           <ToggleButton v-model="uiOptions.showGrid" onLabel="Hide Grid" offLabel="Show Grid" />
+          <DatePicker
+            v-model="uiOptions.dateFilter"
+            selectionMode="range"
+            :manualInput="false"
+            showIcon
+            showTime
+            showButtonBar
+            fluid
+            iconDisplay="input"
+            placeholder="Filter by date"
+            @clear-click="onClearDate"
+          />
         </div>
       </div>
       <div>
@@ -113,5 +129,10 @@ function onTrack() {
 }
 .ml {
   margin-left: 1em;
+}
+.g2r {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  row-gap: 1em;
 }
 </style>

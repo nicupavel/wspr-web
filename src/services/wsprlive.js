@@ -100,8 +100,7 @@ export default function useWSPRLiveService() {
         } else {
           // Save this marker as a low accuracy maidenhead
           aggregatedData[prevTimeKey] = {
-            tx_loc: entry.tx_loc,
-            precise: false
+            tx_loc: entry.tx_loc
           }
           prevTimeKey = timeKey
           continue
@@ -119,8 +118,7 @@ export default function useWSPRLiveService() {
         if (maiden1 > -1 && maiden2 > -1 && isPaired) {
           //console.log(`Adding location ${maiden2} ${maiden1}`)
           aggregatedData[timeKey] = {
-            tx_loc: entry.tx_loc + maiden2 + maiden1, // As report is ordered desc by time we first find the second digit
-            precise: true
+            tx_loc: entry.tx_loc + maiden2 + maiden1 // As report is ordered desc by time we first find the second digit
           }
           // Reset to find another pair
           isPaired = false

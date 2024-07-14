@@ -58,8 +58,8 @@ export default function useMaidenheadConverter() {
   }
 
   function toLatLon(locstr) {
-    if (!locstr || !locstr.match(maidenheadRegex)) {
-      return null
+    if (!locstr || locstr.length % 2 == 1 || !locstr.match(maidenheadRegex)) {
+      return []
     }
 
     let lon = -90,

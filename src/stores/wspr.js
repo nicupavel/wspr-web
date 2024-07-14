@@ -8,7 +8,6 @@ import { defineStore } from 'pinia'
 
 import useWSPRLiveService from '@/services/wsprlive'
 import useMaidenheadConverter from '@/services/maidenhead'
-import useGeoJson from '@/services/geojson'
 
 export const useWSPRStore = defineStore('wspr', () => {
   const REFRESH_INTERVAL_MIN = 4
@@ -25,11 +24,9 @@ export const useWSPRStore = defineStore('wspr', () => {
   }
 
   const wsprService = useWSPRLiveService()
-  const geoJson = useGeoJson()
   const maidenheadConvert = useMaidenheadConverter()
 
   const data = ref([]) // cummulative data array of objects
-  const geoData = ref() // latest data only in geoJSON format
 
   const currentTracking = ref({
     interval: null,
@@ -41,7 +38,8 @@ export const useWSPRStore = defineStore('wspr', () => {
   })
 
   const uiOptions = ref({
-    showGrid: false
+    showGrid: false,
+    dateFilter: null
   })
 
   async function download(callsign, minutesInterval, limit) {
@@ -80,18 +78,18 @@ export const useWSPRStore = defineStore('wspr', () => {
     //console.log(aggregatedData)
     if (!aggregatedData || !Object.keys(aggregatedData).length) return
 
-    geoData.value = geoJson.createCollection()
-
     for (const key in aggregatedData) {
       const maidenhead = aggregatedData[key].tx_loc
-      const precise = aggregatedData[key].precise
+      const precision = aggregatedData[key]?.tx_loc?.length ?? 4
       const coords = maidenheadConvert.toLatLon(maidenhead)
+
+      if (!coords.length) continue
 
       // cummulative data for datatable ui
       data.value.push({
         date: key,
         maidenhead: maidenhead,
-        precise: precise,
+        precision: precision,
         lat: coords[0],
         lon: coords[1]
       })
@@ -99,14 +97,7 @@ export const useWSPRStore = defineStore('wspr', () => {
       if (data.value.length > MAX_DATA_LENGTH) {
         data.value.shift()
       }
-
-      const point = geoJson.featurePoint(coords[0], coords[1], {
-        popupContent: `${key}: ${maidenhead}`,
-        precise: precise
-      })
-      geoJson.addToCollection(geoData.value, point)
     }
-    //console.log(geoData.value)
   }
 
   async function track(callsign) {
@@ -145,7 +136,6 @@ export const useWSPRStore = defineStore('wspr', () => {
   return {
     STATE,
     data,
-    geoData,
     currentTracking,
     uiOptions,
     download,
