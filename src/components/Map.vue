@@ -101,4 +101,4 @@ onMounted(() => {
 <style scoped>
 @import 'leaflet/dist/leaflet.css';
 </style>
-@/services/geojson-data
+

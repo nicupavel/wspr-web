@@ -18,7 +18,8 @@ const wsprStore = useWSPRStore()
 
 const { currentTracking, uiOptions } = storeToRefs(wsprStore)
 const { track, stopTracking, STATE } = wsprStore
-const useMockData = import.meta.env.WSPR_USE_MOCK_DATA;
+
+const useMockData = import.meta.env.WSPR_USE_MOCK_DATA === '1';
 const mockCallsign = import.meta.env.WSPR_MOCK_CALLSIGN;
 
 console.log(STATE.IDLE)

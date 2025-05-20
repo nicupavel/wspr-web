@@ -16,11 +16,14 @@ export default function useWSPRLiveService() {
     minutesInterval = minutesInterval ?? 0
     limit = limit ?? 0
 
-    let query = `SELECT id, time, rx_sign, tx_sign, tx_lat, tx_lon, tx_loc, distance, azimuth, frequency, power FROM wspr.rx 
+    let queryQ = `SELECT id, time, rx_sign, tx_sign, tx_lat, tx_lon, tx_loc, distance, azimuth, frequency, power FROM wspr.rx 
       WHERE tx_sign='${callsign}'
         AND (band = 10 OR band = 14 OR band = 18 OR band = 21) 
         AND match(tx_sign,'^[Q01]') = 0
     `
+
+    let query = `SELECT id, time, rx_sign, tx_sign, tx_lat, tx_lon, tx_loc, distance, azimuth, frequency, power FROM wspr.rx 
+      WHERE tx_sign='${callsign}'`
 
     if (minutesInterval) query += ` AND time >= subtractMinutes(now(), ${minutesInterval})`
     query += ' ORDER BY time DESC'
