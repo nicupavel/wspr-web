@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useWSPRStore } from '@/stores/wspr'
 
@@ -18,6 +18,8 @@ const wsprStore = useWSPRStore()
 
 const { currentTracking, uiOptions } = storeToRefs(wsprStore)
 const { track, stopTracking, STATE } = wsprStore
+const useMockData = import.meta.env.WSPR_USE_MOCK_DATA;
+const mockCallsign = import.meta.env.WSPR_MOCK_CALLSIGN;
 
 console.log(STATE.IDLE)
 
@@ -56,6 +58,13 @@ function onTrack() {
 function onClearDate(event) {
   uiOptions.value.dateFilter = null
 }
+
+onMounted(() => {
+    if (useMockData && mockCallsign) {
+        callsign.value = mockCallsign;
+        onTrack();
+    }    
+})
 </script>
 
 <template>

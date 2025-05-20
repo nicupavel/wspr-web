@@ -1,4 +1,8 @@
 export default function useWSPRLiveService() {
+
+    const useMockData = import.meta.env.WSPR_USE_MOCK_DATA === '1'
+    console.log('Mock data: ', useMockData);
+    
   /**
    * Builds the url to query wspr.live
    * @param {String} callsign
@@ -6,6 +10,7 @@ export default function useWSPRLiveService() {
    * @param {Integer} limit
    * @returns {String}
    */
+
   function buildUrl(callsign, minutesInterval, limit) {
     if (!callsign) return null
     minutesInterval = minutesInterval ?? 0
@@ -33,13 +38,36 @@ export default function useWSPRLiveService() {
    * @param {Integer} limit
    * @returns {Promise}
    */
-  async function download(callsign, minutesInterval, limit) {
+
+  async function downloadApi(callsign, minutesInterval, limit) {
     const url = buildUrl(callsign, minutesInterval, limit)
     if (!url) {
       return null
     }
 
     return await fetch(url)
+  }
+
+  async function downloadMock(callsign, minutesInterval, limit) {
+    try {
+        const mockData = await import(`./mockdata/${callsign}.json`);
+        return {
+            ok: true,
+            json: () => Promise.resolve(mockData),
+        }
+
+      } catch (e) {
+        console.error('Failed to load mock data:', e.message)
+        return null
+      }
+  }
+
+  async function download(callsign, minutesInterval, limit) {
+    if (useMockData) {
+        return downloadMock(callsign, minutesInterval, limit);
+    } else {
+        return downloadApi(callsign, minutesInterval, limit);
+    }
   }
 
   /**
